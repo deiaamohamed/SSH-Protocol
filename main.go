@@ -23,9 +23,6 @@ func main() {
 		{"Snap2", "192.168.1.46:22"},
 	}
 
-	username := "MOAMN"
-	password := "Jpanzer2"
-
 	reader := bufio.NewReader(os.Stdin)
 
 	for len(snaps) > 0 {
@@ -39,25 +36,33 @@ func main() {
 		input = strings.TrimSpace(input)
 		choice, err := strconv.Atoi(input)
 		if err != nil || choice < 0 || choice > len(snaps) {
-			fmt.Println("❌ Invalid choice. Try again.")
+			fmt.Println("Invalid choice. Try again.")
 			continue
 		}
 
 		if choice == 0 {
-			fmt.Println("👋 Exiting.")
+			fmt.Println("Exiting.")
 			break
 		}
 
 		selected := snaps[choice-1]
-		fmt.Printf("⚠️ Sending shutdown command to %s (%s)...\n", selected.Name, selected.IP)
+
+		fmt.Print("Enter username for the Snap: ")
+		usernameInput, _ := reader.ReadString('\n')
+		username := strings.TrimSpace(usernameInput)
+
+		fmt.Print("Enter password for the Snap: ")
+		passwordInput, _ := reader.ReadString('\n')
+		password := strings.TrimSpace(passwordInput)
+
+		fmt.Printf("Sending shutdown command to %s (%s)...\n", selected.Name, selected.IP)
 
 		if shutdownSnap(selected.IP, username, password) {
-			// Remove from list
 			snaps = append(snaps[:choice-1], snaps[choice:]...)
 		}
 	}
 
-	fmt.Println("✅ All selected Snaps have been shut down.")
+	fmt.Println("All selected Snaps have been shut down.")
 }
 
 func shutdownSnap(addr, user, pass string) bool {
@@ -75,6 +80,7 @@ func shutdownSnap(addr, user, pass string) bool {
 		log.Printf("Could not connect to %s: %v\n", addr, err)
 		return false
 	}
+	defer conn.Close()
 
 	session, err := conn.NewSession()
 	if err != nil {
